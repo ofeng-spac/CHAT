@@ -1,0 +1,100 @@
+# 构建文件和目录
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# 可执行文件
+bin/ChatServer
+bin/ChatClient
+bin/performance_test
+
+# 编译产生的文件
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+
+# IDE和编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# 配置文件（包含敏感信息）
+mysql.ini
+bin/mysql.ini
+*.conf
+*.config
+
+# 日志文件
+*.log
+logs/
+
+# 临时文件
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# 系统文件
+.directory
+*.pid
+
+# 测试和调试文件
+core
+core.*
+vgcore.*
+*.dSYM/
+
+# 依赖库（如果本地编译）
+thirdparty/muduo/
+thirdparty/build/
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 压缩文件
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# 文档生成文件
+docs/html/
+docs/latex/
+
+# 性能分析文件
+*.prof
+gmon.out
+callgrind.out.*
+
+# 内存检查文件
+valgrind-out.txt
+*.memcheck
+
+# 覆盖率文件
+*.gcov
+*.gcda
+*.gcno
+lcov.info
+coverage/
+
+# 包管理文件
+conan.lock
+conanbuildinfo.*
+
+# 其他
+*.orig
+*.rej
+.*.swp
+.*.swo
