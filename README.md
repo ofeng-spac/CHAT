@@ -1,398 +1,422 @@
-# CHAT - 基于C++的多人即时通讯系统
+# CHAT - 高性能聊天服务器
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![C++](https://img.shields.io/badge/C++-11-blue.svg)](https://isocpp.org/)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
+## 项目简介
 
-## 📖 项目简介
+CHAT是一个基于C++和muduo网络库开发的高性能聊天服务器系统。该项目采用现代C++设计模式，支持用户注册、登录、好友管理、群组聊天等功能，并集成了Redis缓存和MySQL数据库。
 
-CHAT是一个基于C++开发的高性能多人即时通讯系统，采用现代C++技术栈，支持用户注册登录、好友管理、一对一聊天、群组聊天等核心功能。项目展示了网络编程、数据库设计、缓存应用等后端核心技术的综合运用。
+## 核心特性
 
-## ✨ 核心特性
+### 🚀 高性能网络架构
+- 基于muduo网络库的事件驱动架构
+- 支持高并发连接处理
+- 异步I/O操作，提升系统吞吐量
 
-- 🚀 **高性能网络架构**：基于Muduo网络库的Reactor模式，支持高并发连接
-- 💾 **完整数据存储**：MySQL持久化存储 + Redis缓存，保证数据可靠性
-- 🔄 **灵活连接池**：支持单连接和连接池两种模式，适应不同性能需求
-- 📨 **离线消息推送**：Redis发布订阅机制，支持跨服务器消息分发
-- 🎯 **回调驱动架构**：优雅的消息分发机制，易于扩展新功能
-- 📊 **性能测试框架**：内置多线程并发测试，量化评估系统性能
+### 🔐 安全性保障
+- 密码哈希加密存储（SHA-256 + 盐值）
+- SQL注入防护
+- 输入验证和清理
+- 统一错误处理机制
 
-## 🛠️ 技术栈
+### 💾 数据存储
+- MySQL数据库持久化存储
+- Redis缓存提升性能
+- 数据库连接池管理
+- 支持单连接和连接池两种模式
 
-| 技术领域 | 技术选型 | 说明 |
-|---------|---------|------|
-| **网络编程** | Muduo | 基于Reactor模式的高性能网络库 |
-| **数据存储** | MySQL 8.0+ | 关系型数据库，存储用户数据和消息 |
-| **缓存系统** | Redis 6.0+ | 内存数据库，缓存离线消息和会话状态 |
-| **消息格式** | JSON | 轻量级数据交换格式 |
-| **构建系统** | CMake 3.10+ | 跨平台构建工具 |
-| **编程语言** | C++11 | 现代C++特性，智能指针、lambda等 |
+### 📝 完善的日志系统
+- 多级别日志记录（DEBUG/INFO/WARN/ERROR/FATAL）
+- 日志文件轮转
+- 性能监控日志
+- 控制台和文件双输出
 
-## 🏗️ 系统架构
+### 🛡️ 错误处理
+- 统一错误码定义
+- 标准化错误响应
+- 详细的错误日志记录
+
+## 系统架构
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Chat Client   │    │   Chat Client   │    │   Chat Client   │
+│   Client App    │    │   Client App    │    │   Client App    │
 └─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
           │                      │                      │
           └──────────────────────┼──────────────────────┘
                                  │
                     ┌─────────────┴─────────────┐
-                    │      Chat Server          │
-                    │   (Muduo + Reactor)       │
+                    │     Chat Server           │
+                    │  (muduo + C++)           │
                     └─────────────┬─────────────┘
-                                  │
+                                 │
                     ┌─────────────┴─────────────┐
-                    │     Business Logic        │
-                    │   (Message Handlers)      │
-                    └─────────────┬─────────────┘
-                                  │
-        ┌─────────────────────────┼─────────────────────────┐
-        │                         │                         │
-┌───────▼────────┐    ┌──────────▼──────────┐    ┌────────▼────────┐
-│     MySQL      │    │   Connection Pool    │    │     Redis       │
-│  (User Data)   │    │   (Performance)     │    │ (Cache & PubSub) │
-└────────────────┘    └─────────────────────┘    └─────────────────┘
+                    │                           │
+          ┌─────────┴─────────┐       ┌─────────┴─────────┐
+          │   Redis Cache     │       │   MySQL Database │
+          │   (Session/Cache) │       │   (Persistent)    │
+          └───────────────────┘       └───────────────────┘
 ```
 
-## 📋 功能模块
+## 功能模块
 
 ### 用户管理
-- ✅ 用户注册与登录
-- ✅ 用户状态管理（在线/离线）
-- ✅ 密码验证机制
+- 用户注册（密码加密存储）
+- 用户登录验证
+- 用户状态管理（在线/离线）
+- 用户信息查询
 
 ### 好友系统
-- ✅ 添加/删除好友
-- ✅ 好友列表管理
-- ✅ 好友状态查看
+- 添加好友
+- 好友列表管理
+- 好友状态查询
+
+### 群组功能
+- 创建群组
+- 加入/退出群组
+- 群组消息广播
+- 群组成员管理
 
 ### 消息系统
-- ✅ 一对一实时聊天
-- ✅ 群组创建与管理
-- ✅ 群组聊天功能
-- ✅ 离线消息存储与推送
+- 实时消息传输
+- 离线消息存储
+- 消息历史记录
+- 群组消息处理
 
-### 性能优化
-- ✅ 数据库连接池
-- ✅ Redis缓存机制
-- ✅ 异步消息处理
-- ✅ 多线程性能测试
+## 技术栈
 
-## 🚀 快速开始
+- **编程语言**: C++17
+- **网络库**: muduo
+- **数据库**: MySQL 8.0+
+- **缓存**: Redis 6.0+
+- **JSON处理**: nlohmann/json
+- **构建工具**: CMake
+- **加密**: OpenSSL
+
+## 快速开始
 
 ### 环境要求
 
-- **操作系统**：Linux (Ubuntu 18.04+, CentOS 7+)
-- **编译器**：GCC 7.0+ 或 Clang 6.0+
-- **CMake**：3.10+
-- **MySQL**：8.0+
-- **Redis**：6.0+
-- **依赖库**：Muduo, nlohmann/json
+- Linux操作系统（推荐Ubuntu 20.04+）
+- GCC 9.0+ 或 Clang 10.0+
+- CMake 3.16+
+- MySQL 8.0+
+- Redis 6.0+
+- muduo网络库
 
 ### 安装依赖
 
 ```bash
 # Ubuntu/Debian
 sudo apt update
-sudo apt install build-essential cmake git
-sudo apt install mysql-server mysql-client libmysqlclient-dev
-sudo apt install redis-server libhiredis-dev
+sudo apt install -y build-essential cmake git
+sudo apt install -y libmysqlclient-dev libssl-dev
+sudo apt install -y mysql-server redis-server
 
-# CentOS/RHEL
-sudo yum groupinstall "Development Tools"
-sudo yum install cmake git
-sudo yum install mysql-server mysql-devel
-sudo yum install redis hiredis-devel
+# 安装muduo库
+git clone https://github.com/chenshuo/muduo.git
+cd muduo
+./build.sh
+sudo ./build.sh install
+```
+
+### 数据库配置
+
+1. 启动MySQL服务：
+```bash
+sudo systemctl start mysql
+sudo systemctl enable mysql
+```
+
+2. 创建数据库和表：
+```sql
+-- 连接MySQL
+mysql -u root -p
+
+-- 创建数据库
+CREATE DATABASE chat_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE chat_db;
+
+-- 创建用户表（更新版本，包含salt字段）
+CREATE TABLE user (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    salt VARCHAR(32) NOT NULL,
+    state ENUM('online', 'offline') DEFAULT 'offline',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 创建好友表
+CREATE TABLE friend (
+    userid INT,
+    friendid INT,
+    PRIMARY KEY(userid, friendid),
+    FOREIGN KEY(userid) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY(friendid) REFERENCES user(id) ON DELETE CASCADE
+);
+
+-- 创建群组表
+CREATE TABLE allgroup (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    groupname VARCHAR(50) NOT NULL,
+    groupdesc VARCHAR(200) DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 创建群组用户表
+CREATE TABLE groupuser (
+    groupid INT,
+    userid INT,
+    grouprole ENUM('creator', 'admin', 'normal') DEFAULT 'normal',
+    PRIMARY KEY(groupid, userid),
+    FOREIGN KEY(groupid) REFERENCES allgroup(id) ON DELETE CASCADE,
+    FOREIGN KEY(userid) REFERENCES user(id) ON DELETE CASCADE
+);
+
+-- 创建离线消息表
+CREATE TABLE offlinemessage (
+    userid INT,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(userid) REFERENCES user(id) ON DELETE CASCADE
+);
+```
+
+3. 创建数据库用户：
+```sql
+CREATE USER 'chat_user'@'localhost' IDENTIFIED BY 'chat_password';
+GRANT ALL PRIVILEGES ON chat_db.* TO 'chat_user'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+### Redis配置
+
+1. 启动Redis服务：
+```bash
+sudo systemctl start redis-server
+sudo systemctl enable redis-server
+```
+
+2. 测试Redis连接：
+```bash
+redis-cli ping
+# 应该返回 PONG
 ```
 
 ### 编译项目
 
 ```bash
-# 克隆项目
-git clone https://github.com/yourusername/CHAT.git
-cd CHAT
-
-# 创建构建目录
-mkdir build && cd build
+# 在项目根目录下
+mkdir -p build
+cd build
 
 # 配置和编译
 cmake ..
 make -j$(nproc)
-
-# 或者直接在项目根目录
-cmake .
-make
 ```
+
+### 运行服务器
+
+```bash
+# 在项目根目录下运行
+./bin/ChatServer
+```
+
+服务器默认监听端口：6000
+
+## 配置说明
 
 ### 数据库配置
 
-1. **创建数据库**
-```sql
-CREATE DATABASE chat_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE chat_db;
-
--- 用户表
-CREATE TABLE user (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(50) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    state ENUM('online', 'offline') DEFAULT 'offline',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_name (name)
-);
-
--- 好友关系表
-CREATE TABLE friend (
-    userid INT,
-    friendid INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (userid, friendid),
-    FOREIGN KEY (userid) REFERENCES user(id),
-    FOREIGN KEY (friendid) REFERENCES user(id)
-);
-
--- 群组表
-CREATE TABLE allgroup (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    groupname VARCHAR(50) NOT NULL,
-    groupdesc VARCHAR(200),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 群组用户表
-CREATE TABLE groupuser (
-    groupid INT,
-    userid INT,
-    grouprole ENUM('creator', 'admin', 'normal') DEFAULT 'normal',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (groupid, userid),
-    FOREIGN KEY (groupid) REFERENCES allgroup(id),
-    FOREIGN KEY (userid) REFERENCES user(id)
-);
-
--- 离线消息表
-CREATE TABLE offlinemessage (
-    userid INT,
-    message TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_userid (userid),
-    FOREIGN KEY (userid) REFERENCES user(id)
-);
-```
-
-2. **配置数据库连接**
-
-编辑 `mysql.ini` 文件：
-```ini
-[mysql]
-ip=127.0.0.1
-port=3306
-username=your_username
-password=your_password
-dbname=chat_db
-```
-
-### 启动服务
-
-```bash
-# 启动Redis服务
-sudo systemctl start redis
-
-# 启动MySQL服务
-sudo systemctl start mysql
-
-# 启动聊天服务器
-./bin/ChatServer
-
-# 启动客户端（新终端）
-./bin/ChatClient
-```
-
-## 📊 性能测试
-
-项目内置了性能测试框架，可以评估系统在不同负载下的表现：
-
-```bash
-# 运行性能测试
-./bin/performance_test
-
-# 测试结果示例
-# 并发用户数: 1000
-# 消息总数: 10000
-# 测试时长: 5.2秒
-# QPS: 1923
-# 成功率: 99.8%
-```
-
-## 📁 项目结构
-
-```
-CHAT/
-├── CMakeLists.txt              # 主构建配置
-├── README.md                   # 项目说明文档
-├── DEVELOPMENT_ROADMAP.md      # 开发路线图
-├── INTERVIEW_QA.md            # 面试问答文档
-├── mysql.ini                   # 数据库配置文件
-├── include/                    # 头文件目录
-│   ├── public.hpp             # 公共头文件
-│   └── server/                # 服务器头文件
-│       ├── chatserver.hpp     # 服务器主类
-│       ├── chatservice.hpp    # 业务逻辑服务
-│       ├── db/                # 数据库相关
-│       ├── model/             # 数据模型
-│       └── redis/             # Redis相关
-├── src/                       # 源代码目录
-│   ├── client/                # 客户端代码
-│   │   └── main.cpp          # 客户端主程序
-│   └── server/                # 服务器代码
-│       ├── main.cpp          # 服务器主程序
-│       ├── chatserver.cpp    # 服务器实现
-│       ├── chatservice.cpp   # 业务逻辑实现
-│       ├── db/               # 数据库实现
-│       ├── model/            # 数据模型实现
-│       └── redis/            # Redis实现
-├── test/                      # 测试代码
-│   └── performance_test.cpp   # 性能测试
-├── thirdparty/               # 第三方库
-│   └── json.hpp              # JSON库
-├── bin/                      # 可执行文件目录
-│   ├── ChatServer            # 服务器程序
-│   ├── ChatClient            # 客户端程序
-│   └── performance_test      # 性能测试程序
-└── build/                    # 构建临时文件
-```
-
-## 🎯 使用示例
-
-### 客户端操作示例
-
-```bash
-# 启动客户端后的操作流程
-
-# 1. 注册新用户
-register
-请输入用户名: alice
-请输入密码: 123456
-注册成功！
-
-# 2. 登录
-login
-请输入用户名: alice
-请输入密码: 123456
-登录成功！
-
-# 3. 添加好友
-addfriend
-请输入好友用户名: bob
-添加好友成功！
-
-# 4. 一对一聊天
-chat
-请输入聊天对象用户名: bob
-请输入聊天内容: Hello Bob!
-消息发送成功！
-
-# 5. 创建群组
-creategroup
-请输入群组名称: 技术交流群
-请输入群组描述: C++技术交流
-群组创建成功！群组ID: 1
-
-# 6. 群组聊天
-groupchat
-请输入群组ID: 1
-请输入聊天内容: 大家好！
-群消息发送成功！
-```
-
-## 🔧 配置说明
-
-### 数据库连接池配置
-
-在 `ConnectionPoolManager` 中可以调整连接池参数：
+在 `include/server/db/db.h` 中修改数据库连接参数：
 
 ```cpp
-// 最大连接数
-static const int MAX_CONNECTION_COUNT = 10;
-
-// 连接超时时间（秒）
-static const int CONNECTION_TIMEOUT = 30;
-
-// 连接空闲时间（秒）
-static const int IDLE_TIMEOUT = 300;
+// 数据库配置
+#define DB_HOST "localhost"
+#define DB_USER "chat_user"
+#define DB_PASSWORD "chat_password"
+#define DB_NAME "chat_db"
+#define DB_PORT 3306
 ```
 
 ### Redis配置
 
+在 `include/server/redis/redis.hpp` 中修改Redis连接参数：
+
 ```cpp
-// Redis服务器配置
-static const string REDIS_HOST = "127.0.0.1";
-static const int REDIS_PORT = 6379;
-static const int REDIS_TIMEOUT = 3;
+// Redis配置
+#define REDIS_HOST "127.0.0.1"
+#define REDIS_PORT 6379
+#define REDIS_PASSWORD ""  // 如果设置了密码
 ```
 
-## 🚧 开发路线图
+### 日志配置
 
-查看 [DEVELOPMENT_ROADMAP.md](DEVELOPMENT_ROADMAP.md) 了解项目的详细开发计划和改进方向。
+```cpp
+// 在main函数中配置日志
+LogConfig logConfig;
+logConfig.level = LogLevel::INFO;
+logConfig.logDir = "./logs";
+logConfig.enableConsole = true;
+logConfig.enableFile = true;
+logConfig.maxFileSize = 10 * 1024 * 1024; // 10MB
+logConfig.maxFileCount = 5;
 
-### 近期计划 (v1.1)
-- [ ] 密码加密存储
-- [ ] SQL注入防护
-- [ ] 完善错误处理机制
-- [ ] 添加日志系统
+Logger::getInstance().init(logConfig);
+```
 
-### 中期计划 (v1.2)
-- [ ] 支持文件传输
-- [ ] 消息加密传输
-- [ ] 用户权限管理
-- [ ] 群组管理员功能
+## API接口
 
-### 长期计划 (v2.0)
-- [ ] 微服务架构重构
-- [ ] 分布式部署支持
-- [ ] 负载均衡
-- [ ] 监控和告警系统
+### 用户相关
 
-## 🤝 贡献指南
+#### 用户注册
+```json
+{
+    "msgid": 1,
+    "name": "username",
+    "password": "password"
+}
+```
 
-欢迎贡献代码！请遵循以下步骤：
+#### 用户登录
+```json
+{
+    "msgid": 2,
+    "name": "username",
+    "password": "password"
+}
+```
 
-1. Fork 本项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
+#### 注销登录
+```json
+{
+    "msgid": 3,
+    "id": 1001
+}
+```
 
-### 代码规范
+### 好友相关
 
-- 遵循 Google C++ 编码规范
-- 使用有意义的变量和函数名
-- 添加必要的注释
-- 确保代码通过所有测试
+#### 添加好友
+```json
+{
+    "msgid": 4,
+    "id": 1001,
+    "friendid": 1002
+}
+```
 
-## 📄 许可证
+### 消息相关
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+#### 一对一聊天
+```json
+{
+    "msgid": 5,
+    "id": 1001,
+    "from": 1001,
+    "to": 1002,
+    "msg": "Hello!"
+}
+```
 
-## 👥 作者
+#### 群聊消息
+```json
+{
+    "msgid": 6,
+    "id": 1001,
+    "groupid": 1,
+    "msg": "Hello group!"
+}
+```
 
-- **开发者** - *初始工作* - [YourGitHub](https://github.com/yourusername)
+### 群组相关
 
-## 🙏 致谢
+#### 创建群组
+```json
+{
+    "msgid": 7,
+    "id": 1001,
+    "groupname": "技术讨论群",
+    "groupdesc": "讨论技术问题的群组"
+}
+```
 
-- [Muduo](https://github.com/chenshuo/muduo) - 高性能网络库
-- [nlohmann/json](https://github.com/nlohmann/json) - 现代C++ JSON库
-- [MySQL](https://www.mysql.com/) - 关系型数据库
-- [Redis](https://redis.io/) - 内存数据库
+#### 加入群组
+```json
+{
+    "msgid": 8,
+    "id": 1001,
+    "groupid": 1
+}
+```
 
-## 📞 联系方式
+## 安全特性
 
-如有问题或建议，请通过以下方式联系：
+### 密码安全
+- SHA-256哈希算法
+- 随机盐值生成
+- 密码强度验证
 
-- 邮箱：your.email@example.com
-- GitHub Issues：[项目Issues页面](https://github.com/yourusername/CHAT/issues)
+### 输入验证
+- 用户名格式验证
+- 消息内容过滤
+- SQL注入防护
+- XSS攻击防护
 
----
+### 会话管理
+- 安全的会话令牌
+- 会话超时机制
+- 多设备登录控制
 
-⭐ 如果这个项目对你有帮助，请给它一个星标！
+## 监控和日志
+
+### 日志级别
+- **DEBUG**: 详细的调试信息
+- **INFO**: 一般信息记录
+- **WARN**: 警告信息
+- **ERROR**: 错误信息
+- **FATAL**: 致命错误
+
+### 性能监控
+- 请求响应时间统计
+- 数据库查询性能监控
+- 内存使用情况跟踪
+- 连接数统计
+
+## 故障排除
+
+### 常见问题
+
+1. **编译错误**
+   - 检查依赖库是否正确安装
+   - 确认C++编译器版本
+   - 检查CMake版本
+
+2. **数据库连接失败**
+   - 检查MySQL服务状态
+   - 验证数据库配置参数
+   - 确认用户权限
+
+3. **Redis连接失败**
+   - 检查Redis服务状态
+   - 验证Redis配置
+   - 检查防火墙设置
+
+4. **服务器启动失败**
+   - 检查端口是否被占用
+   - 查看错误日志
+   - 验证配置文件
+
+## 版本历史
+
+### v1.0.0 (当前版本)
+- 基础聊天功能实现
+- 用户管理系统
+- 好友和群组功能
+- 安全性改进
+- 完善的日志系统
+- 错误处理优化
+
+## 许可证
+
+本项目采用MIT许可证，详见 [LICENSE](LICENSE) 文件。

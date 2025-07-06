@@ -1,5 +1,6 @@
 #include "chatservice.hpp"
 #include "public.hpp"
+#include "../../include/server/common/ErrorCodes.hpp"
 #include<string>
 #include<memory>
 #include<vector>
@@ -8,6 +9,7 @@
 #include "muduo/base/Logging.h"
 using namespace std;
 using namespace muduo;
+using namespace muduo::net;
 
 #include"UserModel.hpp"
 
@@ -44,8 +46,10 @@ void ChatService::login(const TcpConnectionPtr &conn, json &js, Timestamp time)
 {
     int id = js["id"].get<int>();
     string pwd = js["pwd"];
-    User user = _userModel.query(id);
-    if (user.getId() != -1 && user.getPwd() == pwd)
+    auto result = _userModel.query(id);
+    User user = result.first;
+    ErrorCode error = result.second;
+    if (error == ErrorCode::SUCCESS && user.getId() != -1 && user.getPwd() == pwd)
     {
         if(user.getState() == "online")
         {   //该用户已经登录，不允许重复登录
@@ -119,8 +123,8 @@ void ChatService::reg(const TcpConnectionPtr &conn, json &js, Timestamp time)
     User user;
     user.setName(name);
     user.setPwd(pwd);
-    bool state = _userModel.insert(user);
-    if (state)
+    ErrorCode state = _userModel.insert(user);
+    if (state == ErrorCode::SUCCESS)
     {
         //注册成功
         json response;
@@ -208,8 +212,10 @@ void ChatService::oneChat(const TcpConnectionPtr &conn, json &js, Timestamp time
         }
     }
     //查询toid是否在线
-    User user = _userModel.query(toid);
-    if (user.getState() == "online")
+    auto result = _userModel.query(toid);
+    User user = result.first;
+    ErrorCode error = result.second;
+    if (error == ErrorCode::SUCCESS && user.getState() == "online")
     {
         _redis.publish(toid, js.dump());
         return;
@@ -272,7 +278,8 @@ void ChatService::groupChat(const TcpConnectionPtr &conn, json &js, Timestamp ti
         else
         {
             //查询toid是否在线
-            if (_userModel.query(id).getState() == "online")
+            auto result = _userModel.query(id);
+            if (result.second == ErrorCode::SUCCESS && result.first.getState() == "online")
             {
                 _redis.publish(id, js.dump());
             }
@@ -305,9 +312,12 @@ void ChatService::loginout(const TcpConnectionPtr &conn, json &js, Timestamp tim
     //更新用户的状态信息
     if (userid!= -1)
     {
-        User user = _userModel.query(userid);
-        user.setState("offline");
-        _userModel.updateState(user);
+        auto result = _userModel.query(userid);
+        if (result.second == ErrorCode::SUCCESS) {
+            User user = result.first;
+            user.setState("offline");
+            _userModel.updateState(user);
+        }
     }
 }
 void ChatService::handleRedisSubscribeMessage(int userid, string msg)//从redis消息队列中获取订阅的消息

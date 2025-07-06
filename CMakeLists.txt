@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(CHAT)
 
 # 设置C++标准
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -g)
 
 # 配置最终可执行文件的输出路径
@@ -56,12 +56,16 @@ add_subdirectory(src)
 # 添加性能测试可执行文件
 aux_source_directory(./src/server/db DB_LIST)
 aux_source_directory(./src/server/model MODEL_LIST)
+aux_source_directory(./src/server/common COMMON_LIST)
+aux_source_directory(./src/server/security SECURITY_LIST)
 
 add_executable(performance_test 
     test/performance_test.cpp
     ${DB_LIST}
     ${MODEL_LIST}
+    ${COMMON_LIST}
+    ${SECURITY_LIST}
 )
 
 # 链接必要的库 - 添加 muduo 库
-target_link_libraries(performance_test muduo_net muduo_base mysqlclient pthread)
+target_link_libraries(performance_test muduo_net muduo_base mysqlclient pthread crypto ssl)

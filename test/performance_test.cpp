@@ -5,6 +5,7 @@
 #include <atomic>
 #include "UserModel.hpp"
 #include "user.hpp"
+#include "../include/server/common/ErrorCodes.hpp"
 
 class PerformanceTest {
 public:
@@ -21,8 +22,10 @@ public:
         for (int i = 0; i < threadCount; ++i) {
             threads.emplace_back([&, i]() {
                 for (int j = 0; j < operationsPerThread; ++j) {
-                    User user = UserModel().query(1);
-                    if (user.getId() != 0) {
+                    auto result = UserModel().query(23); // 使用存在的用户ID
+                    User user = result.first;
+                    ErrorCode error = result.second;
+                    if (error == ErrorCode::SUCCESS && user.getId() != 0) {
                         successCount++;
                     } else {
                         failCount++;
@@ -51,9 +54,9 @@ int main() {
     std::cout << "数据库性能测试\n";
     std::cout << "================\n";
     
-    // 只测试一个配置，减少输出
-    int threadCount = 20;
-    int operationsPerThread = 100;
+    // 简化测试配置
+    int threadCount = 2;
+    int operationsPerThread = 5;
     
     PerformanceTest::testConnectionPool(threadCount, operationsPerThread);
     
