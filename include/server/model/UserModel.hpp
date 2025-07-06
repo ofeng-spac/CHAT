@@ -1,6 +1,8 @@
 #ifndef USERMODEL_H
 #define USERMODEL_H
 #include "user.hpp"
+#include "common/ErrorCodes.hpp"
+#include <utility>
 
 enum class DBConnectionType {
     SINGLE_CONNECTION,  // 原有的单连接方式
@@ -13,9 +15,9 @@ public:
     static void setConnectionType(DBConnectionType type);
     
     // 用户注册
-    bool insert(User &user);
+    ErrorCode insert(User &user);
     // 根据用户号码查询用户信息
-    User query(int id);
+    std::pair<User, ErrorCode> query(int id);
     // 更新用户的状态信息
     bool updateState(User user);
     // 重置用户的状态信息

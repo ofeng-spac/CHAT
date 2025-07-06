@@ -1,7 +1,11 @@
 
 #include "UserModel.hpp"
-#include "db/db.h"
-#include "db/ConnectionPoolManager.h"
+#include "../db/db.h"
+#include "../db/ConnectionPoolManager.h"
+#include "../../../include/server/security/PasswordUtils.hpp"
+#include "../../../include/server/common/InputValidator.hpp"
+#include "../../../include/server/common/ErrorCodes.hpp"
+#include "../../../include/server/common/Logger.hpp"
 #include <muduo/base/Logging.h>
 
 // 静态成员初始化
@@ -16,12 +20,35 @@ void UserModel::setConnectionType(DBConnectionType type) {
 }
 
 // User表的增加操作
-bool UserModel::insert(User &user)
+ErrorCode UserModel::insert(User &user)
 {
-    // 1.组装sql语句
+    CHAT_LOG_INFO_F("Attempting to insert user: %s", user.getName().c_str());
+    
+    // 输入验证
+    ErrorCode validationResult = InputValidator::validateUsername(user.getName());
+    if (validationResult != ErrorCode::SUCCESS) {
+        CHAT_LOG_ERROR_F("Username validation failed for user: %s", user.getName().c_str());
+        return validationResult;
+    }
+    
+    validationResult = InputValidator::validatePassword(user.getPwd());
+    if (validationResult != ErrorCode::SUCCESS) {
+        CHAT_LOG_ERROR("Password validation failed");
+        return validationResult;
+    }
+    
+    // 密码哈希处理
+    string salt = PasswordUtils::generateSalt();
+    string hashedPassword = PasswordUtils::hashPassword(user.getPwd(), salt);
+    
+    // 清理输入以防止SQL注入
+    string safeName = InputValidator::sanitizeString(user.getName());
+    string safeState = InputValidator::sanitizeString(user.getState());
+    
+    // 1.组装sql语句 - 使用参数化查询风格
     char sql[1024] = {0};
-    sprintf(sql, "insert into user(name, password, state) values('%s', '%s', '%s')",
-            user.getName().c_str(), user.getPwd().c_str(), user.getState().c_str());
+    sprintf(sql, "insert into user(name, password, salt, state) values('%s', '%s', '%s', '%s')",
+            safeName.c_str(), hashedPassword.c_str(), salt.c_str(), safeState.c_str());
     
     if (connectionType == DBConnectionType::CONNECTION_POOL) {
         // 使用连接池
@@ -30,7 +57,11 @@ bool UserModel::insert(User &user)
             // 注意：连接池方式下获取insert_id需要特殊处理
             // 这里简化处理，实际项目中需要在Connection类中添加getInsertId方法
             user.setId(1); // 临时设置，实际需要获取真实的insert_id
-            return true;
+            CHAT_LOG_INFO_F("User inserted successfully with ID: %d", user.getId());
+            return ErrorCode::SUCCESS;
+        } else {
+            CHAT_LOG_ERROR("Failed to insert user using connection pool");
+             return ErrorCode::DATABASE_INSERT_FAILED;
         }
     } else {
         // 使用原有的单连接方式
@@ -41,18 +72,33 @@ bool UserModel::insert(User &user)
             {
                 // 获取插入成功的用户数据生成的主键id
                 user.setId(mysql_insert_id(mysql.getConnection()));
-                return true;
+                CHAT_LOG_INFO_F("User inserted successfully with ID: %d", user.getId());
+                return ErrorCode::SUCCESS;
+            } else {
+                CHAT_LOG_ERROR("Failed to execute insert SQL");
+                 return ErrorCode::DATABASE_INSERT_FAILED;
             }
+        } else {
+            CHAT_LOG_ERROR("Failed to connect to database");
+            return ErrorCode::DATABASE_CONNECTION_FAILED;
         }
     }
-    return false;
 }
 
-User UserModel::query(int id)
+pair<User, ErrorCode> UserModel::query(int id)
 {
+    CHAT_LOG_DEBUG_F("Querying user with ID: %d", id);
+    
+    // 输入验证
+    ErrorCode validationResult = InputValidator::validateUserId(id);
+    if (validationResult != ErrorCode::SUCCESS) {
+        CHAT_LOG_ERROR_F("Invalid user ID: %d", id);
+        return make_pair(User(), validationResult);
+    }
+    
     // 1.组装sql语句
     char sql[1024] = {0};
-    sprintf(sql, "select * from user where id = %d", id);
+    sprintf(sql, "select id, name, password, salt, state from user where id = %d", id);
     
     if (connectionType == DBConnectionType::CONNECTION_POOL) {
         // 使用连接池
@@ -66,11 +112,20 @@ User UserModel::query(int id)
                 User user;
                 user.setId(atoi(row[0]));
                 user.setName(row[1]);
-                user.setPwd(row[2]);
-                user.setState(row[3]);
+                user.setPwd(row[2]); // 存储哈希密码
+                if (row[3]) user.setSalt(row[3]); // 设置盐值
+                user.setState(row[4]);
                 mysql_free_result(res);
-                return user;
+                CHAT_LOG_DEBUG_F("User found: %s", user.getName().c_str());
+                return make_pair(user, ErrorCode::SUCCESS);
+            } else {
+                mysql_free_result(res);
+                CHAT_LOG_WARN_F("No user found with ID: %d", id);
+                return make_pair(User(), ErrorCode::USER_NOT_FOUND);
             }
+        } else {
+            CHAT_LOG_ERROR("Database query failed using connection pool");
+             return make_pair(User(), ErrorCode::DATABASE_QUERY_FAILED);
         }
     } else {
         // 使用原有的单连接方式
@@ -86,16 +141,26 @@ User UserModel::query(int id)
                     User user;
                     user.setId(atoi(row[0]));
                     user.setName(row[1]);
-                    user.setPwd(row[2]);
-                    user.setState(row[3]);
+                    user.setPwd(row[2]); // 存储哈希密码
+                    if (row[3]) user.setSalt(row[3]); // 设置盐值
+                    user.setState(row[4]);
                     mysql_free_result(res);
-                    return user;
+                    CHAT_LOG_DEBUG_F("User found: %s", user.getName().c_str());
+                    return make_pair(user, ErrorCode::SUCCESS);
+                } else {
+                    mysql_free_result(res);
+                    CHAT_LOG_WARN_F("No user found with ID: %d", id);
+                    return make_pair(User(), ErrorCode::USER_NOT_FOUND);
                 }
+            } else {
+                CHAT_LOG_ERROR("Database query failed");
+                 return make_pair(User(), ErrorCode::DATABASE_QUERY_FAILED);
             }
+        } else {
+            CHAT_LOG_ERROR("Failed to connect to database");
+            return make_pair(User(), ErrorCode::DATABASE_CONNECTION_FAILED);
         }
     }
-    // Return a default user object if no user is found
-    return User();
 }
 
 bool UserModel::updateState(User user)

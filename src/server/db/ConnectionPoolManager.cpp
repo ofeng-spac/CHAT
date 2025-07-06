@@ -55,9 +55,6 @@ MYSQL_RES* ConnectionPoolManager::query(const std::string& sql) {
     
     auto conn = pool->getConnection();
     if (conn == nullptr) {
-        // 在query方法中也做同样的修改
-        // 注释掉或减少日志输出
-        // LOG_ERROR << "Failed to get connection from pool!";
         return nullptr;
     }
     
